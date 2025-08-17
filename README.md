@@ -20,7 +20,7 @@ A Python script that automatically downloads Amazon.de invoices using browser au
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/simple-amazon-invoice-downloader.git
+git clone https://github.com/apvlv/simple-amazon-invoice-downloader.git
 cd simple-amazon-invoice-downloader
 ```
 
