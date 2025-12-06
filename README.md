@@ -1,3 +1,7 @@
+| :warning: WARNING           |
+|:----------------------------|
+| This project was done with the help of AI coding agents.     |
+
 # Simple Amazon Invoice Downloader
 
 A Python script that automatically downloads Amazon.de invoices using browser automation. The script logs into your Amazon account, navigates through your order history, and downloads all available invoice PDFs for a specified time period.
