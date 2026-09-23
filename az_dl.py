@@ -6,6 +6,7 @@ import time
 import os
 from dotenv import load_dotenv
 import locale
+import sys
 
 locale.setlocale(locale.LC_TIME, 'de_DE')
 
@@ -23,7 +24,7 @@ def sleep():
 
 async def main():
     # Parse date ranges into start_date and end_date
-    year = str(datetime.now().year)  # current year
+    year = sys.argv[1] if len(sys.argv) > 1 else str(datetime.now().year)  # year from argument, default current year
 
     start_date, end_date = year + "0101", year + "1231"
     start_date = datetime.strptime(start_date, "%Y%m%d")
@@ -42,52 +43,59 @@ async def main():
     context = await browser.new_context()
     page = await context.new_page()
 
-    await page.goto("https://www.amazon.de/")
-
-    # Navigate to login
-    login_element = await page.wait_for_selector('span >> text=Hallo, anmelden', timeout=0)
-    if login_element:
-        await login_element.click()
-
-    if email:
-        await page.get_by_label("E-Mail-Adresse oder Mobiltelefonnummer").click()
-        await page.get_by_label("E-Mail-Adresse oder Mobiltelefonnummer").fill(email)
-        await page.get_by_role("button", name="Weiter").click()
+    if not (email and password):
+        # Manual login: open the orders page and wait until the user has logged in
+        await page.goto(f"https://www.amazon.de/your-orders/orders?timeFilter=year-{start_date.year}")
+        print("Please log in manually in the browser window...")
+        await page.wait_for_selector('select#time-filter', timeout=0)
         sleep()
+    else:
+        await page.goto("https://www.amazon.de/")
 
-    if password:
-        await page.get_by_label("Passwort").click()
-        await page.get_by_label("Passwort").fill(password)
+        # Navigate to login
+        login_element = await page.wait_for_selector('span >> text=Hallo, anmelden', timeout=0)
+        if login_element:
+            await login_element.click()
 
-        # Try to check "Keep me logged in" checkbox - it's optional
+        if email:
+            await page.get_by_label("E-Mail-Adresse oder Mobiltelefonnummer").click()
+            await page.get_by_label("E-Mail-Adresse oder Mobiltelefonnummer").fill(email)
+            await page.get_by_role("button", name="Weiter").click()
+            sleep()
+
+        if password:
+            await page.get_by_label("Passwort").click()
+            await page.get_by_label("Passwort").fill(password)
+
+            # Try to check "Keep me logged in" checkbox - it's optional
+            try:
+                await page.get_by_label("Angemeldet bleiben").check(timeout=5000)
+            except TimeoutError:
+                pass
+
+            await page.get_by_role("button", name="Anmelden").click()
+            sleep()
+
+        # Navigate to orders page - try different selectors
         try:
-            await page.get_by_label("Angemeldet bleiben").check(timeout=5000)
-        except TimeoutError:
-            pass
-
-        await page.get_by_role("button", name="Anmelden").click()
-        sleep()
-
-    # Navigate to orders page - try different selectors
-    try:
-        orders_element = await page.wait_for_selector('a >> text=Warenrücksendungen', timeout=10000)
-        if orders_element:
-            await orders_element.click()
-    except TimeoutError:
-        try:
-            orders_element = await page.wait_for_selector('a >> text=Meine Bestellungen', timeout=10000)
+            orders_element = await page.wait_for_selector('a >> text=Warenrücksendungen', timeout=10000)
             if orders_element:
                 await orders_element.click()
         except TimeoutError:
             try:
-                orders_element = await page.wait_for_selector('a[href*="your-orders"]', timeout=10000)
+                orders_element = await page.wait_for_selector('a >> text=Meine Bestellungen', timeout=10000)
                 if orders_element:
                     await orders_element.click()
             except TimeoutError:
-                print("Could not find orders page link automatically.")
-                print("Please manually navigate to your orders page and then restart the script.")
-                return
-    sleep()
+                try:
+                    orders_element = await page.wait_for_selector('a[href*="your-orders"]', timeout=10000)
+                    if orders_element:
+                        await orders_element.click()
+                except TimeoutError:
+                    print("Could not find orders page link automatically.")
+                    print("Please manually navigate to your orders page and then restart the script.")
+                    return
+        sleep()
 
     # Get a list of years from the select options
     select = await page.query_selector('select#time-filter')
