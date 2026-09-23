@@ -9,6 +9,7 @@ A Python script that automatically downloads Amazon.de invoices using browser au
 ## Features
 
 - 🤖 **Automated Login**: Logs into Amazon.de using your credentials
+- 🔑 **Manual Login**: Without credentials, you log in yourself in the browser window (works with 2FA)
 - 📅 **Date Range Filtering**: Downloads invoices for a specific year (defaults to current year)
 - 📄 **PDF Download**: Automatically downloads all available invoice PDFs
 - 🗂️ **Organized Storage**: Saves files with descriptive names including date, amount, and order ID
@@ -38,7 +39,7 @@ pip install -r requirements.txt
 playwright install
 ```
 
-4. Create a `.env` file with your Amazon credentials:
+4. Optional: create a `.env` file with your Amazon credentials. If you leave out `AMAZON_EMAIL` and `AMAZON_PASSWORD`, you log in manually in the browser window instead:
 ```env
 AMAZON_EMAIL=your_email@example.com
 AMAZON_PASSWORD=your_password
@@ -47,18 +48,19 @@ DOWNLOAD_DIR=./downloads
 
 ## Usage
 
-Simply run the script:
+Run the script, optionally with the year you want to download (defaults to the current year):
 
 ```bash
-python az_dl.py
+python az_dl.py        # current year
+python az_dl.py 2023   # all invoices from 2023
 ```
 
 The script will:
 1. Open a browser window
 2. Navigate to Amazon.de
-3. Log in with your credentials
+3. Log in with your credentials, or wait until you have logged in manually
 4. Go to your order history
-5. Download all invoices from the current year
+5. Download all invoices from the selected year
 6. Save them to the downloads directory
 
 ## Configuration
@@ -108,11 +110,11 @@ Example: `20250817_2469_amazon_123-4567890-1234567_001.pdf`
 
 **Login Issues**
 - Verify your credentials in the `.env` file
-- Check if two-factor authentication is enabled (may require manual intervention)
+- If two-factor authentication is enabled, use manual login: remove `AMAZON_EMAIL` and `AMAZON_PASSWORD` from `.env` and log in yourself in the browser window
 - Ensure you're using the correct Amazon.de account
 
 **No invoices downloaded**
-- Check if you have orders in the current year
+- Check if you have orders in the selected year
 - Some orders may not have invoices available for download
 - Verify the date range in the console output
 
